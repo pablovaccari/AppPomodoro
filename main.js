@@ -9,6 +9,9 @@ const itTask = document.querySelector("#itTask");
 const form = document.querySelector("#form");
 const taskName = document.querySelector('#time #taskName');
 
+renderTimer();
+renderTasks();
+
 form.addEventListener('submit', (e) => {
     e.preventDefault(); //anular funcionamiento nativo
     if(itTask.value !== ''){
@@ -50,9 +53,16 @@ function renderTasks(){
     //obtener todos los elementos start-button y asignarle un evento
     const startButtons = document.querySelectorAll('.task .start-button');
     startButtons.forEach((button, index)=>{
+        
+        //control si se agrega una nueva tarea mientras se ejecuta el reloj, no se pierda el "En progreso.."  de la tarea actual
+        const id = button.getAttribute('data-id');
+        if(current === id)
+        {
+            button.textContent = "En progreso..."
+        }
+
         button.addEventListener('click', (e) => {
-            if(!timer){
-                const id = button.getAttribute('data-id');
+            if(!timer){               
                 startButtonHandler(id);
                 button.textContent = "En progreso..."
             }
@@ -61,11 +71,12 @@ function renderTasks(){
 }
 
 function startButtonHandler(id){
-    time = 25 * 60;  //25 minutos
+    time = 10;  //25 * 60 = 25 minutos
     current = id; 
     const currentTask = tasks.find(task => task.id === id);
    
-    taskName.textContent = tasks[currentTask.title];
+    taskName.textContent = currentTask.title;
+    renderTimer();
 
     timer = setInterval(() => {
         timerHandler(id);
@@ -78,7 +89,33 @@ function timerHandler(id) {
 
     if(time === 0){
         clearInterval(timer);
+        timer = null;
         MarkAsCompleted(id);
+        renderTasks();
+        startBreak();
+    }
+}
+
+function startBreak(){
+    time =  3   //5 * 60 = 5 minutos;
+    taskName.textContent = 'Break';
+    renderTimer()
+
+    timerBreak = setInterval(() => {
+        timerBreakHandler()
+    }, 1000)
+
+}
+
+function timerBreakHandler(){
+    time--;
+    renderTimer(); //presentar la primera vez
+
+    if(time === 0){
+        clearInterval(timerBreak);
+        timerBreak = null;
+        current = null;
+        taskName.textContent = '';
         renderTasks();
     }
 }
@@ -89,6 +126,7 @@ function renderTimer(){
     let seconds = parseInt(time % 60);
 
     timeDiv.textContent = `${minutes < 10 ? '0':''}${minutes}:${seconds < 10 ? '0':''}${seconds}`;
+   
 }
 
 function MarkAsCompleted(id)
